@@ -11,20 +11,34 @@ const getUsers= async(req,res) =>{
 
 const updateUser = async (req = request, res = response) => {
     const id = req.params;
-    const {_id,  ...userBody} = req.body;
+    const getUser = await User.findOne({_id:id})
+    const updateUser = req.body;
     
-    const salt = bcryptjs.genSaltSync();
-    userBody.password = bcryptjs.hashSync( userBody.password, salt );
-    const user = await User.findByIdAndUpdate(id,userBody)
+    if (getUser.length) {
+        const salt = bcryptjs.genSaltSync();
+        updateUser.password = bcryptjs.hashSync( userBody.password, salt );
+        await User.updateOne({_id:id},updateUser)
+        res.json(updateUser)
+    }else if(updateUser.rol!=null){
+        return res.status(400).json({msg: 'No se puede cambiar el tipo de rol '});
+    }
+    else{
+        return res.status(400).json({msg: 'Usuario no encontrado con el id '+id});
+    }
 
-    res.json(user)
+    
 
 }
 
 const delUser = async(req = request, res= response) => {
     const id = req.params.id;
-    const userDelete = await User.findByIdAndRemoved(id)
-    res.json({ userDelete})
+    const user = await User.findById(id);
+    if (!user) {
+        return res.status(400).json({msg: 'Usuario no encontrado con el id '+id});
+    }else{
+        const userDelete = await User.deleteOne(user)
+        res.json({ userDelete})
+    }
 }
 
 
